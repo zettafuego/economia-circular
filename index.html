@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Desafío de las R - Economía Circular</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Outfit:wght@400;600;800&display=swap');
+
+  :root {
+    --color-reducir-light: #fff852; /* Amarillo neón fluorescente */
+    --color-reducir-dark: #e1c300;
+    --color-reducir-darker: #9e8200;
+    --color-reutilizar-light: #42eb80; /* Verde marcador */
+    --color-reutilizar-dark: #10ac4f;
+    --color-reutilizar-darker: #0a6830;
+    --color-reciclar-light: #ffaa43; /* Naranja marcador */
+    --color-reciclar-dark: #d87200;
+    --color-reciclar-darker: #944b00;
+    --color-gold-light: #ffeaa7;
+    --color-gold-dark: #f1c40f;
+    --color-gold-glow: rgba(241, 196, 15, 0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at center, #52188c 0%, #17012d 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    color: #fff;
+    user-select: none;
+  }
+
+  /* ===== MODERN UI FONTS ===== */
+  h1, h2, h3, .start-title, .end-title, .score-display, .level-display, .btn-start, .btn-restart, .bin-text {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  /* ===== START SCREEN ===== */
+  #startScreen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    background: radial-gradient(circle at center, #411273 0%, #0c0018 100%);
+    overflow: hidden;
+  }
+
+  /* Ambient glowing spheres in background */
+  #startScreen::before, #startScreen::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+  }
+  #startScreen::before {
+    background: var(--color-reciclar-light);
+    top: 10%; left: 10%;
+    animation: floatGlow 10s ease-in-out infinite alternate;
+  }
+  #startScreen::after {
+    background: var(--color-reutilizar-light);
+    bottom: 10%; right: 10%;
+    animation: floatGlow 10s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes floatGlow {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(50px, 30px) scale(1.2); }
+  }
+
+  .start-content {
+    text-align: center;
+    max-width: 800px;
+    padding: 30px;
+    z-index: 5;
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .manito-start {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+    animation: floatingBreath 3s ease-in-out infinite;
+  }
+
+  @keyframes floatingBreath {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .start-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, #a8ffb2, #ffffff, #a8ffb2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+
+  .start-subtitle {
+    font-size: 1.4rem;
+    color: #8be49f;
+    margin-bottom: 25px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .start-message {
+    font-size: 1.1rem;
+    color: #e2fce8;
+    line-height: 1.7;
+    margin-bottom: 35px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    padding: 25px 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+
+  .start-message em {
+    color: #ffe066;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .r-rules {
+    display: flex; gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 35px;
+  }
+
+  .r-rule-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px;
+    padding: 20px;
+    width: 200px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .r-rule-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .r-rule-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+  }
+
+  .r-rule-card:hover::after { opacity: 1; }
+
+  .r-rule-card .r-icon { font-size: 2.5rem; margin-bottom: 8px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
+  .r-rule-card .r-name { font-size: 1.15rem; font-weight: 700; margin-bottom: 5px; }
+  .r-rule-card .r-desc { font-size: 0.8rem; color: #bfeecb; line-height: 1.4; }
+
+  .btn-start {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: #fff;
+    border: none;
+    padding: 20px 65px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 35px rgba(46,204,113,0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border: 2px solid rgba(255,255,255,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-start::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-start:hover {
+    transform: scale(1.08);
+    box-shadow: 0 15px 45px rgba(46,204,113,0.6);
+  }
+
+  .btn-start:hover::before {
+    left: 100%;
+  }
+
+  .btn-start:active { transform: scale(0.95); }
+
+  /* ===== GAME SCREEN ===== */
+  #gameScreen {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    overflow: hidden;
+    perspective: 1200px; /* Crucial for 3D */
+    background: radial-gradient(circle at 50% 30%, #3e1563 0%, #0d011c 100%);
+  }
+
+  /* Electric wireframes/grid lines on background to enhance 3D depth */
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(179, 136, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(179, 136, 255, 0.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: center;
+    transform: rotateX(60deg) translateY(-200px) scale(2);
+    transform-origin: center top;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 15;
+  }
+
+  .score-display {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.4rem; font-weight: 800;
+    color: #ffeb3b;
+    text-shadow: 0 0 15px rgba(255, 235, 59, 0.3);
+  }
+
+  .score-display .star-icon {
+    font-size: 1.7rem;
+    animation: pulse 1s ease infinite alternate;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.2); }
+  }
+
+  .level-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: rgba(179, 136, 255, 0.15);
+    border: 1px solid rgba(179, 136, 255, 0.3);
+    padding: 6px 20px;
+    border-radius: 20px;
+    color: #b388ff;
+    box-shadow: 0 0 15px rgba(179, 136, 255, 0.2);
+  }
+
+  .lives-display {
+    display: flex; gap: 6px;
+    font-size: 1.6rem;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+  }
+
+  /* ===== 3D CONVEYOR AREA ===== */
+  .conveyor-area {
+    flex: 1;
+    position: relative;
+    transform-style: preserve-3d;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 3D Conveyor Belt Structure */
+  .conveyor-belt-3d {
+    position: absolute;
+    left: 8%;
+    top: 52%;
+    width: 84%;
+    height: 110px;
+    background: linear-gradient(180deg, #3a3a3a 0%, #202020 40%, #151515 100%);
+    border-radius: 16px;
+    box-shadow: 
+      0 30px 60px rgba(0,0,0,0.7),
+      inset 0 4px 12px rgba(255,255,255,0.12),
+      inset 0 -6px 15px rgba(0,0,0,0.8);
+    transform: rotateX(55deg) rotateZ(-12deg);
+    transform-style: preserve-3d;
+    border: 3px solid #4a4a4a;
+    border-bottom-width: 8px;
+    overflow: visible;
+  }
+
+  /* Conveyor Rails Glow */
+  .conveyor-belt-3d::before {
+    content: '';
+    position: absolute;
+    top: -4px; left: -2px; right: -2px;
+    height: 4px;
+    background: linear-gradient(90deg, #9b59b6, #e056fd, #9b59b6);
+    box-shadow: 0 0 12px #be2edd;
+    border-radius: 4px 4px 0 0;
+    opacity: 0.7;
+    animation: railGlow 2s linear infinite;
+  }
+
+  @keyframes railGlow {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+  }
+
+  /* The actual moving tread pattern inside the 3D belt */
+  .conveyor-tread {
+    position: absolute;
+    inset: 4px;
+    border-radius: 10px;
+    background: repeating-linear-gradient(
+      90deg,
+      #1f1f1f 0px, #1f1f1f 25px,
+      #2d2d2d 25px, #2d2d2d 50px
+    );
+    background-size: 50px 100%;
+    animation: beltMove3D 1s linear infinite;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+  }
+
+  @keyframes beltMove3D {
+    from { background-position: 0 0; }
+    to { background-position: 50px 0; }
+  }
+
+  /* Conveyor Rollers (ends) */
+  .conveyor-roller {
+    position: absolute;
+    width: 25px;
+    height: 102px;
+    background: linear-gradient(180deg, #95a5a6 0%, #7f8c8d 50%, #555 100%);
+    border-radius: 4px;
+    top: 1px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  }
+  .roller-left { left: -15px; }
+  .roller-right { right: -15px; }
+
+  /* LANDFILL 3D ZONE */
+  .landfill-zone-3d {
+    position: absolute;
+    right: 4%;
+    top: 25%;
+    width: 140px;
+    height: 180px;
+    transform-style: preserve-3d;
+    transform: rotateX(25deg) rotateY(-20deg) translateZ(30px);
+    pointer-events: none;
+  }
+
+  .landfill-pit {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .landfill-img {
+    width: 90%;
+    max-height: 100px;
+    object-fit: contain;
+    animation: debrisBob 3s ease-in-out infinite alternate;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+  }
+
+  @keyframes debrisBob {
+    0% { transform: translateY(0) scale(1) rotate(0deg); filter: grayscale(0.5); }
+    100% { transform: translateY(15px) scale(0.9) rotate(5deg); filter: grayscale(0.8); }
+  }
+
+ /* CAMIÓN PEQUEÑO ARRIBA */
+.truck-container {
+  position: absolute;
+  top: 20px;
+  right: -250px;
+  z-index: 5;
+  opacity: 0.35;
+  transform: scale(0.4);
+  animation: truckDrive 18s linear infinite;
+  pointer-events: none;
+}
+
+/* CAMIÓN GRANDE ABAJO */
+.truck-container-front {
+  position: absolute;
+  bottom: 40px;
+  right: -450px;
+  z-index: 50;
+  transform: scale(2.3);
+  animation: truckDrive 12s linear infinite;
+  pointer-events: none;
+}
+
+.truck-img {
+  width: 100px;
+  height: auto;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+  @keyframes truckDrive {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-100vw - 300px)); }
+  }
+
+  .landfill-text-3d {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #e74c3c;
+    text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+    letter-spacing: 2px;
+    margin-top: 5px;
+    text-transform: uppercase;
+  }
+
+  /* ===== 3D GAME OBJECTS (BILLBOARDING EFFECT) ===== */
+  .game-object {
+    position: absolute;
+    top: -15px; /* Aligned vertically for larger standing cards */
+    left: 0;
+    transform-style: preserve-3d;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .game-object .obj-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Counter-rotate more aggressively in X (-68deg) to stand straight up vertically and float nicely */
+    transform: rotateZ(12deg) rotateX(-68deg) translateY(-55px) translateZ(15px);
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  }
+
+  /* Glowing glass card behind the emoji */
+  .game-object .obj-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    transform-style: preserve-3d;
+    min-width: 135px; /* Significantly wider as requested */
+  }
+
+  /* Glow according to items category (Yellow, Green, Orange) */
+  .game-object.cat-reducir .obj-card { }
+  .game-object.cat-reutilizar .obj-card { }
+  .game-object.cat-reciclar .obj-card { }
+
+  .game-object .obj-emoji {
+    font-size: 4.4rem; /* Super large emoji for high impact */
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
+    animation: objFloatBounce 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes objFloatBounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+  }
+
+  .game-object .obj-name {
+    font-size: 0.85rem; /* Larger font size */
+    font-weight: 700;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.65);
+    padding: 4px 12px;
+    border-radius: 12px;
+    white-space: nowrap;
+    margin-top: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* Blurry shadow lying flat on the 3D belt */
+  .game-object .obj-shadow {
+    position: absolute;
+    width: 90px; /* Enlarged for bigger cards */
+    height: 28px;
+    background: rgba(0,0,0,0.65);
+    border-radius: 50%;
+    filter: blur(5px);
+    left: 22px;
+    top: 75px;
+    transform: rotateX(0deg) translateZ(-1px);
+    pointer-events: none;
+    animation: shadowScale 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes shadowScale {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(0.8); opacity: 0.5; }
+  }
+
+  /* Toss projectile state */
+  .game-object.flying {
+    z-index: 100 !important;
+  }
+  .game-object.flying .obj-shadow {
+    display: none; /* Hide shadow when flying */
+  }
+
+  /* Timer bar for object */
+  .object-timer-bar {
+    display: none;
+  }
+
+  .object-timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff7675, #ffeaa7, #55efc4);
+    border-radius: 3px;
+    width: 100%;
+  }
+
+  /* Correct/Wrong popups */
+  .game-object.classified-correct {
+    animation: correctPop3D 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  .game-object.classified-wrong {
+    animation: wrongShake3D 0.5s ease forwards;
+  }
+
+  @keyframes correctPop3D {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4) translateZ(80px); opacity: 0.9; }
+    100% { transform: scale(0) translateZ(150px); opacity: 0; }
+  }
+
+  @keyframes wrongShake3D {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-15px) rotate(-10deg); }
+    40% { transform: translateX(15px) rotate(10deg); }
+    60% { transform: translateX(-10px) rotate(-5deg); }
+    80% { transform: translateX(10px) rotate(5deg); }
+    100% { transform: scale(0.8); opacity: 0.3; }
+  }
+
+  /* ===== MANITO GUIDE IN PERSPECTIVE ===== */
+  .manito-container {
+    position: absolute;
+    top: -10px;
+    left: 45%;
+    transform: translateZ(50px);
+    z-index: 12;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .manito-speech {
+    background: rgba(13, 30, 20, 0.85);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    color: #e2fce8;
+    padding: 8px 16px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    position: relative;
+  }
+
+  .manito-speech.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .manito-speech::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid rgba(13, 30, 20, 0.85);
+  }
+
+  .manito-img {
+    width: 90px;
+    height: 90px;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+    animation: manitoFloat 4s ease-in-out infinite;
+  }
+
+  @keyframes manitoFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(2deg); }
+  }
+
+  .manito-img.celebrate { animation: manitoJump 0.4s ease 3; }
+  .manito-img.sad { animation: manitoSad 0.8s ease 1; }
+
+  @keyframes manitoJump {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.15) rotate(5deg); }
+  }
+
+  @keyframes manitoSad {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    25% { transform: translateY(8px) rotate(-8deg); }
+    75% { transform: translateY(8px) rotate(8deg); }
+  }
+
+  /* ===== PURE CSS 3D BINS CONTAINER ===== */
+  .bins-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 25px 20px 30px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    z-index: 20;
+    perspective: 1000px;
+  }
+
+  .bin-3d {
+    width: 155px;
+    height: 145px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(15deg) rotateY(-5deg);
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1.25);
+    cursor: pointer;
+  }
+
+  .bin-3d:hover {
+    transform: rotateX(12deg) rotateY(-3deg) translateY(-8px);
+    filter: brightness(1.15);
+  }
+
+  .bin-3d:active {
+    transform: rotateX(20deg) rotateY(-8deg) translateY(4px);
+  }
+
+  /* Custom glow transitions */
+  .bin-3d.pulse-correct {
+    animation: binPulseCorrect 0.5s ease;
+  }
+  .bin-3d.pulse-wrong {
+    animation: binPulseWrong 0.5s ease;
+  }
+
+  @keyframes binPulseCorrect {
+    0%, 100% { transform: rotateX(15deg) scale(1); filter: brightness(1); }
+    50% { transform: rotateX(5deg) scale(1.15) translateY(-10px); filter: brightness(1.5) drop-shadow(0 0 15px var(--glow-color)); }
+  }
+
+  @keyframes binPulseWrong {
+    0%, 100% { transform: rotateX(15deg) scale(1); }
+    20%, 60% { transform: rotateX(15deg) scale(0.95) translateX(-8px) rotateY(-10deg); }
+    40%, 80% { transform: rotateX(15deg) scale(0.95) translateX(8px) rotateY(0deg); }
+  }
+
+  /* 3D Sides */
+  .bin-side {
+    position: absolute;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .bin-front {
+    width: 155px;
+    height: 125px;
+    background: linear-gradient(135deg, var(--c-light) 0%, var(--c-dark) 100%);
+    transform: translateZ(20px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 
+      inset 0 2px 6px rgba(255,255,255,0.25),
+      0 12px 25px rgba(0,0,0,0.5);
+    z-index: 2;
+  }
+
+  .bin-reducir {
+    --c-light: var(--color-reducir-light);
+    --c-dark: var(--color-reducir-dark);
+    --c-darker: var(--color-reducir-darker);
+    --glow-color: #fff852;
+  }
+  .bin-reutilizar {
+    --c-light: var(--color-reutilizar-light);
+    --c-dark: var(--color-reutilizar-dark);
+    --c-darker: var(--color-reutilizar-darker);
+    --glow-color: #42eb80;
+  }
+  .bin-reciclar {
+    --c-light: var(--color-reciclar-light);
+    --c-dark: var(--color-reciclar-dark);
+    --c-darker: var(--color-reciclar-darker);
+    --glow-color: #ffaa43;
+  }
+
+  .bin-top {
+    width: 155px;
+    height: 40px;
+    background: rgba(255,255,255,0.08);
+    transform: rotateX(-90deg) translateZ(20px);
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+    border-radius: 12px 12px 0 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Inner hollow hole in bin */
+  .bin-top::before {
+    content: '';
+    width: 80%;
+    height: 60%;
+    background: #000;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(255,255,255,0.1);
+  }
+
+  .bin-left {
+    width: 40px;
+    height: 125px;
+    background: var(--c-darker);
+    transform: rotateY(-90deg) translateZ(20px);
+    border-radius: 12px 0 0 12px;
+  }
+
+  .bin-right {
+    width: 40px;
+    height: 125px;
+    background: var(--c-darker);
+    transform: rotateY(90deg) translateZ(135px);
+    border-radius: 0 12px 12px 0;
+  }
+
+  .bin-3d .bin-icon {
+    font-size: 2.2rem;
+    margin-bottom: 2px;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+  }
+
+  .bin-3d .bin-text {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .bin-key-badge {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.4);
+    padding: 2px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ===== FEVER MODE (MODO FIEBRE) SYSTEM ===== */
+  .fever-overlay {
+    position: absolute;
+    inset: 0;
+    border: 5px solid var(--color-gold-dark);
+    box-shadow: inset 0 0 50px rgba(241, 196, 15, 0.4);
+    z-index: 8;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  #gameScreen.fever-active .fever-overlay {
+    opacity: 1;
+    animation: borderGoldPulse 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes borderGoldPulse {
+    0% { box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.2); border-color: rgba(241, 196, 15, 0.5); }
+    100% { box-shadow: inset 0 0 60px rgba(241, 196, 15, 0.6); border-color: rgba(241, 196, 15, 1); }
+  }
+
+  #gameScreen.fever-active .conveyor-belt-3d {
+    background: linear-gradient(180deg, #443c13 0%, #201b02 40%, #151100 100%);
+    border-color: var(--color-gold-dark);
+    box-shadow: 
+      0 30px 60px rgba(0,0,0,0.8),
+      0 0 25px rgba(241, 196, 15, 0.3),
+      inset 0 4px 12px rgba(255,255,255,0.15),
+      inset 0 -6px 15px rgba(0,0,0,0.8);
+  }
+
+  #gameScreen.fever-active .conveyor-belt-3d::before {
+    background: linear-gradient(90deg, var(--color-gold-light), var(--color-gold-dark), var(--color-gold-light));
+    box-shadow: 0 0 20px var(--color-gold-dark);
+  }
+
+  #gameScreen.fever-active .game-object .obj-card {
+    
+  }
+
+  /* Fever active banner */
+  .fever-banner {
+    position: absolute;
+    top: 68px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: linear-gradient(135deg, #f1c40f, #f39c12);
+    border: 2px solid #fff;
+    padding: 4px 20px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #000;
+    z-index: 15;
+    box-shadow: 0 6px 20px rgba(241, 196, 15, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+  }
+
+  .fever-banner.visible {
+    transform: translateX(-50%) scale(1);
+    animation: feverScaleBeat 0.8s ease infinite alternate;
+  }
+
+  @keyframes feverScaleBeat {
+    0% { transform: translateX(-50%) scale(1); }
+    100% { transform: translateX(-50%) scale(1.08); }
+  }
+
+  /* Fever Timer Bar on top */
+  .fever-timer-container {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: rgba(0,0,0,0.5);
+    z-index: 16;
+    display: none;
+  }
+
+  .fever-timer-bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ffe066, #ff9233);
+    box-shadow: 0 0 10px #f1c40f;
+    transition: width 0.1s linear;
+  }
+
+  /* Combo Display */
+  .combo-display {
+    position: absolute;
+    top: 72px;
+    right: 30px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffeb3b;
+    z-index: 15;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-shadow: 0 0 15px rgba(255, 235, 59, 0.6);
+    background: rgba(0,0,0,0.5);
+    padding: 4px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 235, 59, 0.2);
+  }
+
+  .combo-display.visible {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  /* Streak progress bar (combos toward fever/levels) */
+  .streak-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: rgba(255,255,255,0.05);
+    z-index: 10;
+  }
+
+  .streak-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    box-shadow: 0 0 8px #2ecc71;
+    transition: width 0.4s cubic-bezier(0.1, 0.8, 0.1, 1);
+  }
+
+  /* Floating Score */
+  .score-float {
+    position: absolute;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #2ecc71;
+    pointer-events: none;
+    z-index: 30;
+    animation: floatUp3D 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  }
+
+  @keyframes floatUp3D {
+    0% { opacity: 0; transform: translateY(0) scale(0.6) translateZ(0); }
+    20% { opacity: 1; transform: translateY(-20px) scale(1.1) translateZ(50px); }
+    100% { opacity: 0; transform: translateY(-90px) scale(1.3) translateZ(100px); }
+  }
+
+  .score-float.fever-score {
+    color: #f1c40f;
+    text-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+  }
+
+  /* Level Up Banner */
+  .level-up-banner {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffeb3b;
+    text-shadow: 0 0 35px rgba(255,235,59,0.9), 0 5px 15px rgba(0,0,0,0.6);
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .level-up-banner.show {
+    animation: levelUp3D 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes levelUp3D {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) translateZ(0); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) translateZ(100px); }
+    40% { transform: translate(-50%, -50%) scale(1) translateZ(80px); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1) translateZ(80px); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) translateY(-60px) translateZ(200px); }
+  }
+
+  /* ===== PARTICLE EMITTERS ===== */
+  .particle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 25;
+    font-size: 1.4rem;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    animation: particlePhysics 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  @keyframes particlePhysics {
+    0% { opacity: 1; transform: translate(0, 0) scale(1.3) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0) rotate(var(--rot)); }
+  }
+
+  /* Warning Flash Overlay */
+  .game-warning {
+    position: absolute; inset: 0;
+    border: 5px solid rgba(231, 76, 60, 0);
+    pointer-events: none;
+    z-index: 9;
+    transition: border-color 0.2s;
+  }
+
+  .game-warning.active {
+    animation: warningFlash 0.5s ease 2;
+  }
+
+  @keyframes warningFlash {
+    0%, 100% { border-color: rgba(231, 76, 60, 0); box-shadow: inset 0 0 0 rgba(231, 76, 60, 0); }
+    50% { border-color: rgba(231, 76, 60, 0.8); box-shadow: inset 0 0 30px rgba(231, 76, 60, 0.5); }
+  }
+
+  /* ===== END SCREEN ===== */
+  #endScreen {
+    display: none;
+    position: fixed; inset: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: radial-gradient(circle at center, #11361c 0%, #051408 100%);
+    text-align: center;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .end-content {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    max-width: 650px;
+    z-index: 5;
+  }
+
+  .end-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #a8ffb2, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
+
+  .end-manito {
+    width: 130px;
+    height: 130px;
+    margin: 10px auto 20px;
+    filter: drop-shadow(0 6px 15px rgba(0,0,0,0.4));
+    animation: floatingBreath 3s ease-in-out infinite;
+  }
+
+  .end-score-section {
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 24px;
+    padding: 20px 30px;
+    margin: 15px 0 25px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  .end-score-label {
+    font-size: 1.1rem;
+    color: #8be49f;
+    margin-bottom: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .end-score-value {
+    font-size: 4.5rem;
+    font-weight: 800;
+    color: #2ecc71;
+    text-shadow: 0 0 35px rgba(46,204,113,0.5);
+    line-height: 1;
+  }
+
+  .end-stats {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin: 20px 0 30px;
+    flex-wrap: wrap;
+  }
+
+  .end-stat {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 10px 18px;
+    min-width: 100px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+
+  .end-stat .stat-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .end-stat .stat-label {
+    font-size: 0.8rem;
+    color: #8be49f;
+    margin-top: 2px;
+  }
+
+  .end-message {
+    font-size: 1.05rem;
+    color: #e2fce8;
+    line-height: 1.6;
+    margin: 10px 0 30px;
+    background: rgba(0,0,0,0.2);
+    padding: 15px 25px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .btn-restart {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: #fff;
+    border: none;
+    padding: 16px 45px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(46,204,113,0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 10px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+  }
+
+  .btn-restart:hover {
+    transform: scale(1.08);
+    box-shadow: 0 12px 35px rgba(46,204,113,0.6);
+  }
+
+  .btn-restart:active { transform: scale(0.95); }
+
+  .btn-home {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    padding: 16px 45px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 10px;
+  }
+
+  .btn-home:hover {
+    background: rgba(255,255,255,0.15);
+    transform: scale(1.05);
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  /* ===== EDUCATIONAL POPUP ===== */
+  .overlay-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .overlay-bg.active { display: flex; }
+
+  .overlay-box {
+    background: radial-gradient(circle at top, #143521 0%, #091a10 100%);
+    border-radius: 28px;
+    padding: 35px 40px;
+    text-align: center;
+    border: 2px solid rgba(46, 204, 113, 0.3);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.6), 0 0 30px rgba(46, 204, 113, 0.15);
+    max-width: 480px;
+    width: 90%;
+    animation: popIn3D 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+    position: relative;
+  }
+
+  @keyframes popIn3D {
+    from { transform: scale(0.6) rotateX(30deg) translateZ(-100px); opacity: 0; }
+    to { transform: scale(1) rotateX(0deg) translateZ(0); opacity: 1; }
+  }
+
+  .overlay-box .ov-icon { 
+    font-size: 3.5rem; 
+    margin-bottom: 12px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    animation: pulse 1s ease infinite alternate;
+  }
+
+  .overlay-box .ov-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #ffeb3b;
+    text-shadow: 0 0 10px rgba(255, 235, 59, 0.3);
+  }
+
+  .overlay-box .ov-text {
+    font-size: 1rem;
+    color: #e2fce8;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    background: rgba(0,0,0,0.3);
+    padding: 15px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+
+  .btn-continue {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: #fff;
+    border: none;
+    padding: 12px 35px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 5px 15px rgba(46,204,113,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .btn-continue:hover { 
+    transform: scale(1.05); 
+    box-shadow: 0 8px 20px rgba(46,204,113,0.5);
+  }
+
+  /* Animations library */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive refinements */
+  @media (max-width: 600px) {
+    .start-title { font-size: 2.2rem; }
+    .start-subtitle { font-size: 1.05rem; }
+    .r-rules { gap: 10px; }
+    .r-rule-card { width: 145px; padding: 15px; }
+    .r-rule-card .r-icon { font-size: 2rem; }
+    .r-rule-card .r-name { font-size: 0.95rem; }
+    .r-rule-card .r-desc { font-size: 0.72rem; }
+    .btn-start { padding: 15px 40px; font-size: 1.2rem; }
+    
+    .bins-container { gap: 10px; padding: 15px 10px 25px; }
+    .bin-3d { width: 105px; height: 110px; }
+    .bin-front { width: 105px; height: 95px; }
+    .bin-top { width: 105px; height: 30px; }
+    .bin-left { width: 30px; height: 95px; }
+    .bin-right { width: 30px; height: 95px; transform: rotateY(90deg) translateZ(90px); }
+    .bin-3d .bin-icon { font-size: 1.6rem; }
+    .bin-3d .bin-text { font-size: 0.8rem; }
+    .bin-key-badge { display: none; } /* Hide on small mobile to save space */
+    
+    .conveyor-belt-3d { left: 4%; width: 92%; height: 95px; }
+    .game-object .obj-emoji { font-size: 2.6rem; }
+    .game-object .obj-card { padding: 8px 10px; min-width: 75px; }
+    .game-object .obj-name { font-size: 0.65rem; }
+    .game-object .obj-shadow { width: 50px; left: 12px; }
+    .manito-img { width: 65px; height: 65px; }
+    .manito-container { left: 40%; }
+    
+    .end-score-value { font-size: 3.2rem; }
+    .end-title { font-size: 2.2rem; }
+    .overlay-box { padding: 25px 20px; }
+  }
+
+  /* Fluorescent Marker Highlighter styling to match the reference photo strikes */
+  .highlighter {
+    position: relative;
+    display: inline-block;
+    color: #fff !important;
+    font-weight: 800;
+    padding: 0 6px;
+    z-index: 1;
+    white-space: nowrap;
+  }
+  .highlighter::after {
+    content: '';
+    position: absolute;
+    left: -4%;
+    bottom: 3px;
+    width: 108%;
+    height: 52%;
+    background: var(--hl-color, rgba(255, 248, 82, 0.75));
+    z-index: -1;
+    transform: rotate(-1.2deg) skewX(-10deg);
+    border-radius: 3px;
+    mix-blend-mode: initial;
+    opacity: 0.9;
+  }
+  .hl-yellow { --hl-color: #e1c300; }
+  .hl-green { --hl-color: #10ac4f; }
+  .hl-orange { --hl-color: #d87200; }
+  .logo-img{
+    width: 120px;   /* ajusta el tamaño */
+    height: auto;   /* mantiene la proporción */
+}
+  /* ===== STORY SCREEN ===== */
+  #storyScreen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 150;
+    background: url('ciudad_fondo.png') center/cover no-repeat;
+  }
+  .story-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 700px;
+    text-align: center;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.1);
+    animation: fadeInUp 0.8s ease forwards;
+  }
+  .story-manito-img {
+    width: 150px;
+    animation: floatingBreath 3s ease-in-out infinite;
+    margin-bottom: -15px;
+    z-index: 2;
+    position: relative;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  }
+  .story-speech-bubble {
+    background: #fff;
+    color: #17012d;
+    padding: 25px;
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  }
+  .story-speech-bubble::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 15px solid #fff;
+  }
+  .story-speech-bubble h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #27ae60;
+  }
+  .story-speech-bubble p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+  }
+  .btn-continue-story {
+    background: linear-gradient(135deg, #ffaa43, #d87200);
+    color: #fff;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(216, 114, 0, 0.4);
+  }
+  .btn-continue-story:hover {
+    transform: scale(1.05);
+  }
+</style>
+</head>
+<body>
+<audio id="bgMusic" loop>
+  <source src="musica.mp3" type="audio/mpeg">
+</audio>
+<!-- ===== STORY SCREEN ===== -->
+<div id="storyScreen">
+  <div class="story-content">
+    <div class="story-manito-container">
+      <img src="bien.png" alt="Manito" class="story-manito-img">
+    </div>
+    <div class="story-speech-bubble">
+      <h2>¡Hola, futura heroína o héroe del planeta!</h2>
+      <p>La <strong>economía circular</strong> es vital para nuestra ciudad. ¡En lugar de usar y botar, necesitamos aprender a <strong>reducir, reutilizar y reciclar</strong> para mantener nuestra ciudad limpia, viva y llena de energía verde!</p>
+      <button class="btn-continue-story" onclick="showStartScreen()">¡Entendido!</button>
+    </div>
+  </div>
+</div>
+<audio id="bgMusic" loop>
+    <source src="musica.mp3" type="audio/mpeg">
+</audio>
+<!-- ===== START SCREEN ===== -->
+<div id="startScreen" style="display: none;">
+  <div class="start-content">
+     <img src="ba.png" alt="SINBA Logo" class="logo-img" onerror="this.style.display='none'">
+    <div class="start-title">El Desafío de las R</div>
+    <div class="start-subtitle">Economía Circular en Acción</div>
+    
+    <div class="start-message">
+      ¡Tienes la oportunidad de <em>salvar al planeta</em> de la acumulación de residuos!<br><br>
+      Los objetos llegan en una faja transportadora. Clasifícalos correctamente en las <em>3 R</em> antes de que caigan al vertedero.
+    </div>
+    <div class="r-rules">
+      <div class="r-rule-card">
+        <div class="r-icon">📉</div>
+        <div class="r-name highlighter hl-yellow">Reducir</div>
+      
+        <div class="r-desc">Disminuir el consumo y evitar residuos innecesarios</div>
+      </div>
+      <div class="r-rule-card">
+        <div class="r-icon">🔄</div>
+        <div class="r-name highlighter hl-green">Reutilizar</div>
+        <div class="r-desc">Dar un nuevo uso a los objetos antes de desecharlos</div>
+      </div>
+      <div class="r-rule-card">
+        <div class="r-icon">♻️</div>
+        <div class="r-name highlighter hl-orange">Reciclar</div>
+        <div class="r-desc">Procesar materiales para crear nuevos productos</div>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startGame()">¡JUGAR!</button>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="gameScreen">
+  <div class="grid-bg"></div>
+  <div class="streak-bar"><div class="streak-fill" id="streakFill"></div></div>
+  <div class="fever-timer-container" id="feverTimerContainer"><div class="fever-timer-bar" id="feverTimerBar"></div></div>
+  <div class="fever-overlay"></div>
+
+  <div class="game-header">
+    <div class="score-display">
+      <span class="star-icon">⭐</span>
+      <span id="scoreText">0</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="level-display">
+        Nivel <span id="levelText">1</span>
+      </div>
+      <button id="btnVoiceToggle" onclick="toggleVoice()" style="background:none; border:none; color:#ffeb3b; font-size:1.5rem; cursor:pointer; display:flex; align-items:center; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transition:transform 0.2s;" title="Activar/Desactivar Narración de Voz">
+        🔊
+      </button>
+    </div>
+    <div class="lives-display" id="livesDisplay">
+      ❤️❤️❤️❤️❤️
+    </div>
+  </div>
+
+  <div class="conveyor-area" id="conveyorArea">
+    <div class="game-warning" id="gameWarning"></div>
+
+    <div class="manito-container">
+      <div class="manito-speech" id="manitoSpeech"></div>
+      <img id="manitoImg" class="manito-img" src="ba.png" alt="Manito" />
+    </div>
+
+    <div class="fever-banner" id="feverBanner">🔥 MODO FIEBRE 2X ⭐</div>
+    <div class="combo-display" id="comboDisplay">🔥 x0</div>
+    <div class="level-up-banner" id="levelUpBanner">¡NIVEL ARRIBA!</div>
+
+    <!-- 3D Conveyor Structure -->
+    <div class="conveyor-belt-3d">
+      <div class="conveyor-roller roller-left"></div>
+      <div class="conveyor-tread"></div>
+      <div class="conveyor-roller roller-right"></div>
+    </div>
+
+    <!-- CAMIÓN PEQUEÑO ARRIBA -->
+    <div class="truck-container">
+    <img src="XGnzL-removebg-preview.png" class="truck-img" alt="Camión">
+    </div>
+
+   <!-- CAMIÓN GRANDE ABAJO -->
+   <div class="truck-container-front">
+   <img src="XGnz.png" class="truck-img" alt="Camión">
+   </div>
+
+    <!-- 3D Landfill Structure -->
+    <div class="landfill-zone-3d">
+      <div class="landfill-pit">
+        <img src="vertedero.png" class="landfill-img" alt="Vertedero">
+        <div class="landfill-text-3d">Vertedero</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Satisfying 3D Interactive Bins -->
+  <div class="bins-container">
+    <div class="bin-3d bin-reducir" id="btnReducir" onclick="classifyObject('reducir')">
+      <div class="bin-side bin-left"></div>
+      <div class="bin-side bin-right"></div>
+      <div class="bin-side bin-top"></div>
+      <div class="bin-side bin-front">
+        <span class="bin-icon">📉</span>
+        <span class="bin-text">Reducir</span>
+      </div>
+      <div class="bin-key-badge">1 / R</div>
+    </div>
+    <div class="bin-3d bin-reutilizar" id="btnReutilizar" onclick="classifyObject('reutilizar')">
+      <div class="bin-side bin-left"></div>
+      <div class="bin-side bin-right"></div>
+      <div class="bin-side bin-top"></div>
+      <div class="bin-side bin-front">
+        <span class="bin-icon">🔄</span>
+        <span class="bin-text">Reutilizar</span>
+      </div>
+      <div class="bin-key-badge">2 / U</div>
+    </div>
+    <div class="bin-3d bin-reciclar" id="btnReciclar" onclick="classifyObject('reciclar')">
+      <div class="bin-side bin-left"></div>
+      <div class="bin-side bin-right"></div>
+      <div class="bin-side bin-top"></div>
+      <div class="bin-side bin-front">
+        <span class="bin-icon">♻️</span>
+        <span class="bin-text">Reciclar</span>
+      </div>
+      <div class="bin-key-badge">3 / C</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== END SCREEN ===== -->
+<div id="endScreen">
+  <div class="end-content">
+    <div class="end-title">¡Juego Terminado!</div>
+    <img id="endManito" class="end-manito" src="ba.png" alt="Manito" />
+    <div class="end-score-section">
+      <div class="end-score-label">Puntuación Final</div>
+      <div class="end-score-value" id="endScore">0</div>
+    </div>
+    <div class="end-stats">
+      <div class="end-stat">
+        <div class="stat-val" id="endCorrect" style="color:#4caf50;">0</div>
+        <div class="stat-label">Aciertos</div>
+      </div>
+      <div class="end-stat">
+        <div class="stat-val" id="endWrong" style="color:#f44336;">0</div>
+        <div class="stat-label">Fallos</div>
+      </div>
+      <div class="end-stat">
+        <div class="stat-val" id="endLevel" style="color:#2196f3;">1</div>
+        <div class="stat-label">Nivel</div>
+      </div>
+      <div class="end-stat">
+        <div class="stat-val" id="endCombo" style="color:#ff9800;">0</div>
+        <div class="stat-label">Max Combo</div>
+      </div>
+    </div>
+    <div class="end-message" id="endMessage"></div>
+    <button class="btn-restart" onclick="startGame()">🔄 Jugar de Nuevo</button>
+    <button class="btn-home" onclick="goHome()">🏠 Inicio</button>
+  </div>
+</div>
+
+<!-- Educational Popup -->
+<div class="overlay-bg" id="eduPopup">
+  <div class="overlay-box">
+    <div class="ov-icon" id="eduIcon">💡</div>
+    <div class="ov-title" id="eduTitle">¡Dato Educativo!</div>
+    <div class="ov-text" id="eduText"></div>
+    <button class="btn-continue" onclick="closeEduPopup()">¡Entendido! Continuar ▶️</button>
+  </div>
+</div>
+
+<script>
+
+const GAME_OBJECTS = [
+  { name: "Botella de plástico", emoji: "🧴", category: "reciclar",
+    tip: "Las botellas de plástico se pueden reciclar para crear nuevas botellas, ropa o materiales de construcción. ¡Nunca tires una botella a la basura normal!" },
+  { name: "Laptop vieja", emoji: "💻", category: "reutilizar",
+    tip: "Las laptops viejas se pueden reparar, donar a escuelas o desarmar para reutilizar sus piezas. ¡La reutilización extiende la vida útil de la tecnología!" },
+  { name: "Restos de comida", emoji: "🍌", category: "reciclar",
+    tip: "Los restos orgánicos se pueden compostar para crear abono natural. ¡El compostaje es una forma de reciclaje que devuelve nutrientes al suelo!" },
+  { name: "Bolsa de tela", emoji: "👜", category: "reutilizar",
+    tip: "Las bolsas de tela son reutilizables cientos de veces. ¡Llevar tu propia bolsa evita el uso de cientos de bolsas plásticas al año!" },
+  { name: "Reloj roto", emoji: "⏰", category: "reutilizar",
+    tip: "Muchos relojes rotos se pueden reparar o sus piezas se pueden reutilizar en manualidades. ¡Reparar es mejor que desechar!" },
+  { name: "Envase de cartón", emoji: "📦", category: "reciclar",
+    tip: "El cartón es 100% reciclable y se puede transformar en nuevos empaques, papel o materiales de embalaje. ¡Sepáralo de otros residuos!" },
+  { name: "Pilas usadas", emoji: "🔋", category: "reciclar",
+    tip: "Las pilas contienen metales pesados tóxicos. Deben llevarse a puntos de recolección especial para ser recicladas correctamente." },
+  { name: "Ropa vieja", emoji: "👕", category: "reutilizar",
+    tip: "La ropa que ya no usas puede donarse, repararse o transformarse en trapos de limpieza. ¡La moda circular es el futuro!" },
+  { name: "Compra innecesaria", emoji: "🛒", category: "reducir",
+    tip: "Antes de comprar, pregúntate si realmente lo necesitas. Reducir el consumo es la forma más efectiva de generar menos residuos." },
+  { name: "Productos desechables", emoji: "🥤", category: "reducir",
+    tip: "Los productos de un solo uso generan toneladas de basura. Opta por alternativas reutilizables: botellas, cubiertos y bolsas de tela." },
+  { name: "Exceso de comida", emoji: "🍕", category: "reducir",
+    tip: "Planifica tus comidas y compra solo lo que necesites. ¡Reducir el desperdicio de alimentos es una de las acciones más importantes!" },
+  { name: "Bolsas de plástico", emoji: "🛍️", category: "reducir",
+    tip: "Una bolsa de plástico tarda 150 años en degradarse. Usa bolsas reutilizables y reduce el uso de plástico en tu vida diaria." },
+  { name: "Lata de aluminio", emoji: "🥫", category: "reciclar",
+    tip: "El aluminio se puede reciclar infinitamente sin perder calidad. ¡Reciclar una lata ahorra energía para que funcione un TV por 3 horas!" },
+  { name: "Vidrio roto", emoji: "🍶", category: "reciclar",
+    tip: "El vidrio es 100% reciclable y se puede fundir para crear nuevos envases. ¡Separa los vidrios por color para un mejor reciclaje!" },
+  { name: "Teléfono antiguo", emoji: "📱", category: "reutilizar",
+    tip: "Los teléfonos antiguos pueden usarse como cámaras de seguridad, reproductores de música o donarse. ¡Dales una segunda vida!" },
+  { name: "Agua embotellada", emoji: "💧", category: "reducir",
+    tip: "Comprar agua embotellada genera residuos plásticos innecesarios. Usa un filtro y una botella reutilizable. ¡Reducir es la mejor R!" },
+  { name: "Mueble dañado", emoji: "🪑", category: "reutilizar",
+    tip: "Muchos muebles dañados se pueden reparar, restaurar o transformar en algo nuevo. ¡La creatividad no tiene límites!" },
+  { name: "Papel usado", emoji: "📄", category: "reciclar",
+    tip: "El papel se puede reciclar entre 5 y 7 veces. ¡Usa ambas caras del papel y recíclalo siempre que puedas!" },
+  { name: "Cápsulas de café", emoji: "☕", category: "reciclar",
+    tip: "Las cápsulas de café de aluminio se pueden reciclar. Algunas marcas ofrecen programas de recolección. ¡Infórmate y participa!" },
+  { name: "Juguetes rotos", emoji: "🧸", category: "reutilizar",
+    tip: "Muchos juguetes se pueden reparar o sus piezas usar para crear otros. ¡Enseñar a reparar es enseñar sostenibilidad!" },
+  { name: "Folletos publicitarios", emoji: "📰", category: "reducir",
+    tip: "Rechaza la publicidad no deseada. Opta por facturas y catálogos digitales. ¡Reducir el papel impreso salva árboles!" },
+  { name: "Envase de vidrio", emoji: "🫙", category: "reutilizar",
+    tip: "Los frascos de vidrio son perfectos para almacenar alimentos, especias o manualidades. ¡Reutilizar envases ahorra recursos!" },
+  { name: "Cable viejo", emoji: "🔌", category: "reutilizar",
+    tip: "Los cables viejos pueden reutilizarse como organizadores, sujetadores o en proyectos de electrónica. ¡No los tires!" },
+  { name: "Ropa con manchas", emoji: "👗", category: "reutilizar",
+    tip: "La ropa con manchas puede teñirse, parchearse o transformarse en otra prenda. ¡El upcycling da nueva vida a la ropa!" },
+  { name: "Neumáticos usados", emoji: "🛞", category: "reciclar",
+    tip: "Los neumáticos pueden reciclarse en asfalto, pisos de caucho o incluso maceteros. ¡Dales un nuevo propósito!" },
+  { name: "Revistas viejas", emoji: "📚", category: "reciclar",
+    tip: "Las revistas y periódicos se reciclan para hacer papel reciclado, cartón o incluso materiales de aislamiento." },
+  { name: "Comida caducada", emoji: "🥦", category: "reducir",
+    tip: "Revisa las fechas de vencimiento y planifica tus compras. ¡Reducir el desperdicio de alimentos ayuda al planeta y a tu bolsillo!" },
+  { name: "Electrodoméstico roto", emoji: "🔧", category: "reutilizar",
+    tip: "Antes de tirar un electrodoméstico, intenta repararlo. Las cafeterías de reparación y tutoriales online pueden ayudarte." },
+  { name: "Botas de vidrio", emoji: "🍺", category: "reciclar",
+    tip: "Las botellas de vidrio se pueden reciclar infinitamente. ¡Separar el vidrio por colores facilita el proceso de reciclaje!" },
+  { name: "Productos con exceso de empaque", emoji: "📦", category: "reducir",
+    tip: "Evita productos con empaques excesivos. Elige opciones a granel o con envases retornables para reducir residuos." },
+];
+
+const MANITO_PHRASES_CORRECT = [
+  "¡Excelente! 🎉", "¡Así se hace! 💪", "¡Genial! 🌟", "¡Perfecto! 🏆",
+  "¡Eres un crack! ⭐", "¡Muy bien! 🎊", "¡Increíble! 🚀", "¡Brillante! 💎"
+];
+
+const MANITO_PHRASES_WRONG = [
+  "¡Oooh no! 😢", "¡Casi! 🤔", "¡Ups! ⚠️", "¡Sigue intentando! 💪",
+  "¡No te rindas! 💚", "¡Ánimo! 🌱"
+];
+
+
+ 
+// ===== PROCEDURAL SYNTHESIZER (WEB AUDIO API) =====
+const SoundEffects = {
+  ctx: null,
+  bgNodes: [],   // Nodos de música de fondo activos
+  bgInterval: null,
+  bgGain: null,
+  bgPlaying: false,
+
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+
+  // ===== MÚSICA DE FONDO EN BUCLE =====
+  startBgMusic() {
+    this.init();
+    if (this.bgPlaying) return;
+    this.bgPlaying = true;
+
+    // Creamos un GainNode maestro para la música de fondo (volumen bajo)
+    this.bgGain = this.ctx.createGain();
+    this.bgGain.gain.setValueAtTime(0.0, this.ctx.currentTime);
+    this.bgGain.gain.linearRampToValueAtTime(0.055, this.ctx.currentTime + 1.5);
+    this.bgGain.connect(this.ctx.destination);
+
+    // Bajo sintetizado - patrón de 4 notas que se repite
+    const bassNotes = [65.41, 73.42, 82.41, 87.31]; // C2 D2 E2 F2
+    let beatIdx = 0;
+    const bpm = 90;
+    const beatMs = (60 / bpm) * 1000;
+
+    const playBeat = () => {
+      if (!this.bgPlaying) return;
+      const t = this.ctx.currentTime;
+
+      // Bajo pulsante
+      const bass = this.ctx.createOscillator();
+      const bassG = this.ctx.createGain();
+      bass.type = 'sawtooth';
+      bass.frequency.setValueAtTime(bassNotes[beatIdx % 4], t);
+      bassG.gain.setValueAtTime(0.4, t);
+      bassG.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      const bassFilter = this.ctx.createBiquadFilter();
+      bassFilter.type = 'lowpass';
+      bassFilter.frequency.value = 280;
+      bass.connect(bassFilter);
+      bassFilter.connect(bassG);
+      bassG.connect(this.bgGain);
+      bass.start(t);
+      bass.stop(t + 0.38);
+
+      // Hi-hat cada 2 tiempos
+      if (beatIdx % 2 === 0) {
+        const bufSz = this.ctx.sampleRate * 0.04;
+        const buf = this.ctx.createBuffer(1, bufSz, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSz; i++) data[i] = Math.random() * 2 - 1;
+        const hat = this.ctx.createBufferSource();
+        hat.buffer = buf;
+        const hatFilter = this.ctx.createBiquadFilter();
+        hatFilter.type = 'highpass';
+        hatFilter.frequency.value = 8000;
+        const hatG = this.ctx.createGain();
+        hatG.gain.setValueAtTime(0.12, t);
+        hatG.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        hat.connect(hatFilter);
+        hatFilter.connect(hatG);
+        hatG.connect(this.bgGain);
+        hat.start(t);
+      }
+
+      // Melodía ambiental cada 8 tiempos
+      const melodyScale = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+      if (beatIdx % 8 === 0) {
+        const mel = this.ctx.createOscillator();
+        const melG = this.ctx.createGain();
+        mel.type = 'triangle';
+        mel.frequency.setValueAtTime(melodyScale[Math.floor(Math.random() * melodyScale.length)], t);
+        melG.gain.setValueAtTime(0.0, t);
+        melG.gain.linearRampToValueAtTime(0.18, t + 0.05);
+        melG.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        mel.connect(melG);
+        melG.connect(this.bgGain);
+        mel.start(t);
+        mel.stop(t + 0.6);
+      }
+
+      beatIdx++;
+      this.bgInterval = setTimeout(playBeat, beatMs);
+    };
+
+    playBeat();
+  },
+
+  stopBgMusic() {
+    this.bgPlaying = false;
+    if (this.bgInterval) clearTimeout(this.bgInterval);
+    this.bgInterval = null;
+    if (this.bgGain) {
+      this.bgGain.gain.setValueAtTime(this.bgGain.gain.value, this.ctx.currentTime);
+      this.bgGain.gain.linearRampToValueAtTime(0.0, this.ctx.currentTime + 0.5);
+      this.bgGain = null;
+    }
+  },
+
+  // ===== FANFARRIA FINAL =====
+  playEndFanfare(isWin) {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const t = this.ctx.currentTime;
+
+    if (isWin) {
+      // Victoria: fanfarria alegre ascendente
+      const fanfare = [
+        { f: 523.25, s: 0.00, d: 0.15 },
+        { f: 659.25, s: 0.15, d: 0.15 },
+        { f: 783.99, s: 0.30, d: 0.15 },
+        { f: 1046.50, s: 0.45, d: 0.40 },
+        { f: 880.00, s: 0.50, d: 0.20 },
+        { f: 1046.50, s: 0.70, d: 0.60 },
+      ];
+      fanfare.forEach(({ f, s, d }) => {
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(f, t + s);
+        g.gain.setValueAtTime(0.0, t + s);
+        g.gain.linearRampToValueAtTime(0.12, t + s + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + s + d);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(t + s); o.stop(t + s + d + 0.05);
+      });
+      // Acorde final brillante
+      [523.25, 659.25, 783.99].forEach((f, i) => {
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, t + 1.4);
+        g.gain.setValueAtTime(0.09, t + 1.4);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 2.6);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(t + 1.4); o.stop(t + 2.7);
+      });
+      // Brillo de brillo rápido
+      for (let i = 0; i < 8; i++) {
+        const sparkFreq = 1200 + i * 150;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(sparkFreq, t + 1.3 + i * 0.05);
+        g.gain.setValueAtTime(0.04, t + 1.3 + i * 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.3 + i * 0.05 + 0.1);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(t + 1.3 + i * 0.05); o.stop(t + 1.3 + i * 0.05 + 0.12);
+      }
+    } else {
+      // Derrota: melodía descendente triste
+      const sadNotes = [
+        { f: 523.25, s: 0.0, d: 0.3 },
+        { f: 466.16, s: 0.3, d: 0.3 },
+        { f: 415.30, s: 0.6, d: 0.3 },
+        { f: 349.23, s: 0.9, d: 0.7 },
+      ];
+      sadNotes.forEach(({ f, s, d }) => {
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f, t + s);
+        g.gain.setValueAtTime(0.08, t + s);
+        g.gain.exponentialRampToValueAtTime(0.001, t + s + d);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(t + s); o.stop(t + s + d + 0.05);
+      });
+    }
+  },
+  play(type) {
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    const t = this.ctx.currentTime;
+    
+    switch(type) {
+      case 'correct':
+        this.chime(523.25, 0.1, t);
+        this.chime(659.25, 0.1, t + 0.06);
+        this.chime(783.99, 0.15, t + 0.12);
+        break;
+      case 'wrong':
+        this.buzz(220, 75, 0.28, t);
+        break;
+      case 'miss':
+        this.noise(0.25, t, 300);
+        this.buzz(120, 45, 0.35, t);
+        break;
+      case 'toss':
+        this.whoosh(0.16, t);
+        break;
+      case 'levelUp':
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          this.chime(freq, 0.15, t + idx * 0.08);
+        });
+        break;
+      case 'fever':
+        this.sweep(300, 1100, 0.6, t);
+        break;
+    }
+  },
+  chime(freq, dur, start) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.12, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  },
+  buzz(freqStart, freqEnd, dur, start) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freqStart, start);
+    osc.frequency.linearRampToValueAtTime(freqEnd, start + dur);
+    gain.gain.setValueAtTime(0.22, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  },
+  whoosh(dur, start) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(250, start);
+    osc.frequency.exponentialRampToValueAtTime(900, start + dur);
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.linearRampToValueAtTime(0.07, start + dur * 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  },
+  sweep(freqStart, freqEnd, dur, start) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freqStart, start);
+    osc.frequency.exponentialRampToValueAtTime(freqEnd, start + dur);
+    gain.gain.setValueAtTime(0.07, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, start);
+    filter.frequency.exponentialRampToValueAtTime(2500, start + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  },
+  noise(dur, start, cutOffFreq) {
+    const bufferSize = this.ctx.sampleRate * dur;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noiseNode = this.ctx.createBufferSource();
+    noiseNode.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(cutOffFreq, start);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.08, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
+    noiseNode.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    noiseNode.start(start);
+    noiseNode.stop(start + dur);
+  }
+};
+
+let gameState = {
+  score: 0,
+  lives: 5,
+  level: 1,
+  combo: 0,
+  maxCombo: 0,
+  correctCount: 0,
+  wrongCount: 0,
+  objectsSpawned: 0,
+  objectsToNextLevel: 10,
+  baseSpeed: 0.9,
+  currentSpeed: 0.9,
+  spawnInterval: 3500,
+  activeObjects: [],
+  isRunning: false,
+  isPaused: false,
+  lastSpawnTime: 0,
+  animFrameId: null,
+  spawnTimeoutId: null,
+  feverActive: false,
+  feverTimeLeft: 0,
+  
+  // Text-To-Speech state
+  voiceEnabled: true,
+};
+
+const $ = id => document.getElementById(id);
+
+// ===== TEXT-TO-SPEECH (TTS) NATIVE ENGINE =====
+function showStartScreen() {
+  document.getElementById('storyScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  speak("¡Bienvenidos al desafío de las R!");
+}
+
+function speak(text) {
+  if (gameState.voiceEnabled && 'speechSynthesis' in window) {
+    // Cancel current speech to prevent overlapping queues
+    window.speechSynthesis.cancel();
+    
+    // Strip emojis and formatting characters so TTS only reads raw text in Spanish
+    let cleanText = text.replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+                        .replace(/[\u{2700}-\u{27BF}]/gu, '')
+                        .replace(/[\u{2600}-\u{26FF}]/gu, '')
+                        .replace(/[⭐🔥🗑️📉🔄♻️❤️🖤🪙✨🎉❌💡🔧]/gu, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                        
+    if (cleanText.length === 0) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'es-ES';
+    utterance.rate = 1.08; // Slightly brisk and lively
+    utterance.pitch = 1.1; // Friendly slightly higher pitch
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function toggleVoice() {
+  gameState.voiceEnabled = !gameState.voiceEnabled;
+  $('btnVoiceToggle').textContent = gameState.voiceEnabled ? '🔊' : '🔇';
+  $('btnVoiceToggle').style.transform = 'scale(1.25)';
+  setTimeout(() => $('btnVoiceToggle').style.transform = '', 200);
+
+  if (gameState.voiceEnabled) {
+    speak("Voz activada");
+  } else {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+}
+
+function initManito() {
+  setManitoFace('normal');
+}
+
+function setManitoFace(expression) {
+  const gameManito = $('manitoImg');
+  if (!gameManito) return;
+  
+  if (expression === 'normal') {
+    gameManito.src = 'mano.png';
+  } else if (expression === 'celebrate') {
+    gameManito.src = 'bien.png';
+  } else if (expression === 'sad') {
+    gameManito.src = 'mal.png';
+  }
+}
+
+function startGame() {
+  $('startScreen').style.display = 'none';
+  $('endScreen').style.display = 'none';
+  $('gameScreen').style.display = 'flex';
+
+  gameState = {
+    score: 0,
+    lives: 5,
+    level: 1,
+    combo: 0,
+    maxCombo: 0,
+    correctCount: 0,
+    wrongCount: 0,
+    objectsSpawned: 0,
+    objectsToNextLevel: 10,
+    baseSpeed: 0.9,
+    currentSpeed: 0.9,
+    spawnInterval: 3500,
+    activeObjects: [],
+    isRunning: true,
+    isPaused: false,
+    lastSpawnTime: 0,
+    animFrameId: null,
+    spawnTimeoutId: null,
+    feverActive: false,
+    feverTimeLeft: 0,
+    voiceEnabled: gameState.voiceEnabled !== undefined ? gameState.voiceEnabled : true,
+  };
+
+  SoundEffects.init();
+  SoundEffects.play('correct');
+  SoundEffects.stopBgMusic();
+  SoundEffects.startBgMusic();
+  
+  // Set speaker toggle text correctly
+  $('btnVoiceToggle').textContent = gameState.voiceEnabled ? '🔊' : '🔇';
+
+  deactivateFeverMode();
+  // AGREGAR dentro de startGame()siiii este eraaaaaaaxd
+
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.loop = true;
+  bgMusic.volume = 0.3;
+  bgMusic.play().catch(err => console.log(err));
+  const area = $('conveyorArea');
+  area.querySelectorAll('.game-object, .score-float, .particle').forEach(el => el.remove());
+
+  updateUI();
+  setManitoFace('normal');
+
+  const manitoImg = $('manitoImg');
+  manitoImg.className = 'manito-img';
+  $('manitoSpeech').className = 'manito-speech';
+
+  const pit = document.querySelector('.landfill-pit');
+  if (pit) {
+    pit.innerHTML = `
+      <img src="vertedero.png" class="landfill-img" alt="Vertedero">
+      <div class="landfill-text-3d">Vertedero</div>
+    `;
+  }
+
+  const tread = document.querySelector('.conveyor-tread');
+  if (tread) tread.style.animationDuration = '1.2s';
+
+  gameState.lastSpawnTime = performance.now();
+  gameLoop();
+  scheduleSpawn();
+  
+  speak("¡A jugar! Salva al planeta clasificando los residuos.");
+}
+
+function goHome() {
+  $('gameScreen').style.display = 'none';
+  $('endScreen').style.display = 'none';
+  $('startScreen').style.display = 'flex';
+  if (gameState.animFrameId) cancelAnimationFrame(gameState.animFrameId);
+  if (gameState.spawnTimeoutId) clearTimeout(gameState.spawnTimeoutId);
+  gameState.isRunning = false;
+  deactivateFeverMode();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+function gameLoop() {
+  if (!gameState.isRunning) return;
+
+  if (gameState.feverActive && !gameState.isPaused) {
+    gameState.feverTimeLeft -= 1000 / 60;
+    const progress = Math.max(0, gameState.feverTimeLeft / 8000);
+    $('feverTimerBar').style.width = (progress * 100) + '%';
+    
+    if (gameState.feverTimeLeft <= 0) {
+      deactivateFeverMode();
+    }
+  }
+
+  const area = $('conveyorArea');
+  const areaWidth = area.offsetWidth;
+  const fajaLength = areaWidth * 0.72;
+  
+  gameState.activeObjects.forEach(objData => {
+    if (objData.classified || objData.fell) return;
+
+    if (!gameState.isPaused) {
+      objData.x += gameState.currentSpeed;
+    }
+
+    if (objData.element) {
+      objData.element.style.left = objData.x + 'px';
+
+      const progress = Math.max(0, Math.min(1, objData.x / fajaLength));
+      const bodyEl = objData.element.querySelector('.obj-body');
+      if (bodyEl) {
+        const scaleVal = 1.1 + progress * 0.55; // Larger base scale and dynamic growth
+        bodyEl.style.transform = `rotateZ(12deg) rotateX(-68deg) translateY(-55px) translateZ(15px) scale(${scaleVal})`;
+      }
+
+      const timerFill = objData.element.querySelector('.object-timer-fill');
+      if (timerFill) {
+        const timeProgress = Math.max(0, 1 - objData.x / fajaLength);
+        timerFill.style.width = (timeProgress * 100) + '%';
+      }
+
+      if (objData.x > fajaLength * 0.75 && !objData.warned) {
+        objData.warned = true;
+        $('gameWarning').classList.add('active');
+        setTimeout(() => $('gameWarning').classList.remove('active'), 1000);
+      }
+    }
+
+    if (objData.x >= fajaLength) {
+      objData.fell = true;
+      if (objData.element) {
+        objData.element.style.transition = 'none';
+        objData.x = fajaLength;
+        objData.element.style.left = fajaLength + 'px';
+        
+        const pit = document.querySelector('.landfill-pit');
+        if (pit) {
+          const newVertedero = document.createElement('img');
+          newVertedero.src = 'vertedero.png';
+          newVertedero.className = 'landfill-img';
+          const offsetX = (Math.random() - 0.5) * 40;
+          const offsetY = (Math.random() - 0.5) * 40;
+          newVertedero.style.position = 'absolute';
+          newVertedero.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+          pit.appendChild(newVertedero);
+        }
+      }
+      handleObjectMissed(objData);
+    }
+  });
+
+  gameState.activeObjects = gameState.activeObjects.filter(obj => {
+    if (obj.classified) return false;
+    if (obj.fell) {
+      return false;
+    }
+    return true;
+  });
+
+  gameState.animFrameId = requestAnimationFrame(gameLoop);
+}
+
+function scheduleSpawn() {
+  if (!gameState.isRunning) return;
+
+  gameState.spawnTimeoutId = setTimeout(() => {
+    if (!gameState.isRunning) return;
+    spawnObject();
+    scheduleSpawn();
+  }, gameState.spawnInterval + Math.random() * 1200);
+}
+
+function spawnObject() {
+  if (!gameState.isRunning || gameState.isPaused) return;
+
+  const tread = document.querySelector('.conveyor-tread');
+  if (!tread) return;
+  const objTemplate = GAME_OBJECTS[Math.floor(Math.random() * GAME_OBJECTS.length)];
+
+  const el = document.createElement('div');
+  el.className = `game-object cat-${objTemplate.category}`;
+  el.style.left = '-120px';
+  
+  const feverClass = gameState.feverActive ? 'fever-aura' : '';
+
+  el.innerHTML = `
+    <div class="obj-shadow"></div>
+    <div class="obj-body">
+      <div class="obj-card ${feverClass}">
+        <div class="obj-emoji">${objTemplate.emoji}</div>
+        <div class="obj-name">${objTemplate.name}</div>
+        <div class="object-timer-bar"><div class="object-timer-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+  `;
+  tread.appendChild(el);
+
+  const objData = {
+    element: el,
+    name: objTemplate.name,
+    emoji: objTemplate.emoji,
+    category: objTemplate.category,
+    tip: objTemplate.tip,
+    x: -120,
+    classified: false,
+    fell: false,
+    warned: false,
+  };
+
+  gameState.activeObjects.push(objData);
+  gameState.objectsSpawned++;
+
+  // Text-to-speech speak spawned object!
+  speak(objTemplate.name);
+}
+
+function classifyObject(category) {
+  if (!gameState.isRunning || gameState.isPaused) return;
+
+  let targetObj = null;
+  let maxX = -Infinity;
+
+  gameState.activeObjects.forEach(obj => {
+    if (!obj.classified && !obj.fell && obj.x > maxX) {
+      maxX = obj.x;
+      targetObj = obj;
+    }
+  });
+
+  if (!targetObj) return;
+
+  targetObj.classified = true;
+  const isCorrect = (targetObj.category === category);
+  
+  targetObj.element.style.display = 'none';
+  
+  throwObjectToBin(targetObj, category, isCorrect);
+}
+
+function throwObjectToBin(obj, chosenCategory, isCorrect) {
+  SoundEffects.play('toss');
+
+  const screen = $('gameScreen');
+  const screenRect = screen.getBoundingClientRect();
+
+  const startRect = obj.element.getBoundingClientRect();
+  const startX = startRect.left - screenRect.left + startRect.width / 2;
+  const startY = startRect.top - screenRect.top + startRect.height / 2;
+
+  const binId = { reducir: 'btnReducir', reutilizar: 'btnReutilizar', reciclar: 'btnReciclar' }[chosenCategory];
+  const binEl = $(binId);
+  const binRect = binEl.getBoundingClientRect();
+  const endX = binRect.left - screenRect.left + binRect.width / 2;
+  const endY = binRect.top - screenRect.top + binRect.height / 2;
+
+  const flyerColor = isCorrect
+    ? (obj.category === 'reducir' ? '#fff852' : (obj.category === 'reutilizar' ? '#42eb80' : '#ffaa43'))
+    : '#ff4757';
+
+  const flyer = document.createElement('div');
+  flyer.className = 'game-object flying';
+  flyer.style.position = 'absolute';
+  flyer.style.left = '0px';
+  flyer.style.top = '0px';
+  flyer.style.transformOrigin = 'center center';
+  
+  flyer.innerHTML = `
+    <div class="obj-body" style="transform: none;">
+      <div class="obj-card" style="padding: 16px 20px; min-width: 135px; border-color: ${flyerColor}; box-shadow: 0 10px 25px ${flyerColor}44">
+        <span style="font-size: 4.4rem;">${obj.emoji}</span>
+      </div>
+    </div>
+  `;
+  screen.appendChild(flyer);
+
+  const startTime = performance.now();
+  const duration = 500;
+  const peakHeight = 160;
+
+  function anim(time) {
+    const elapsed = time - startTime;
+    const t = Math.min(1, elapsed / duration);
+
+    const curX = startX + (endX - startX) * t;
+    const curY = startY + (endY - startY) * t - 4 * peakHeight * t * (1 - t);
+
+    const scale = 1.0 * (1 - t) + 1.6 * t;
+    const rot = t * 720;
+
+    flyer.style.left = `${curX - 50}px`;
+    flyer.style.top = `${curY - 50}px`;
+    flyer.style.transform = `scale(${scale}) rotate(${rot}deg)`;
+
+    if (t < 1) {
+      requestAnimationFrame(anim);
+    } else {
+      flyer.remove();
+      if (isCorrect) {
+        handleBinCorrect(obj, chosenCategory);
+      } else {
+        handleBinWrong(obj, chosenCategory);
+      }
+    }
+  }
+  requestAnimationFrame(anim);
+}
+
+function handleBinCorrect(obj, category) {
+  gameState.combo++;
+  if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
+  gameState.correctCount++;
+
+  const baseScore = 10;
+  const comboBonus = Math.min(gameState.combo, 10) * 2;
+  const levelBonus = gameState.level * 2;
+  let totalPoints = baseScore + comboBonus + levelBonus;
+
+  if (gameState.feverActive) {
+    totalPoints *= 2;
+  }
+  gameState.score += totalPoints;
+
+  SoundEffects.play('correct');
+
+  const binId = { reducir: 'btnReducir', reutilizar: 'btnReutilizar', reciclar: 'btnReciclar' }[category];
+  const bin = $(binId);
+  if (bin) {
+    bin.classList.add('pulse-correct');
+    setTimeout(() => bin.classList.remove('pulse-correct'), 500);
+  }
+
+  const screen = $('gameScreen').getBoundingClientRect();
+  const binRect = bin.getBoundingClientRect();
+  const absoluteBinX = binRect.left - screen.left + binRect.width / 2;
+  const absoluteBinY = binRect.top - screen.top + binRect.height / 2 - 30;
+
+  showFloatingScore(absoluteBinX, totalPoints, gameState.feverActive);
+
+  if (gameState.feverActive) {
+    spawnParticlesFountain(absoluteBinX, absoluteBinY, '🪙', 12);
+    spawnParticlesFountain(absoluteBinX, absoluteBinY, '✨', 8);
+  } else {
+    spawnParticlesFountain(absoluteBinX, absoluteBinY, '🌟', 8);
+    spawnParticlesFountain(absoluteBinX, absoluteBinY, '🎉', 6);
+  }
+
+  setManitoFace('celebrate');
+  const manitoImg = $('manitoImg');
+  if (manitoImg) manitoImg.className = 'manito-img celebrate';
+  setTimeout(() => {
+    setManitoFace('normal');
+    if (manitoImg) manitoImg.className = 'manito-img';
+  }, 1200);
+
+  const phrase = MANITO_PHRASES_CORRECT[Math.floor(Math.random() * MANITO_PHRASES_CORRECT.length)];
+  showManitoSpeech(phrase);
+  speak(phrase);
+
+  if (gameState.combo === 5 && !gameState.feverActive) {
+    activateFeverMode();
+  }
+
+  updateComboDisplay();
+  checkLevelUp();
+  updateUI();
+
+  if (obj.element && obj.element.parentElement) obj.element.remove();
+}
+
+function handleBinWrong(obj, chosenCategory) {
+  gameState.combo = 0;
+  gameState.wrongCount++;
+  gameState.lives--;
+
+  SoundEffects.play('wrong');
+
+  const binId = { reducir: 'btnReducir', reutilizar: 'btnReutilizar', reciclar: 'btnReciclar' }[chosenCategory];
+  const bin = $(binId);
+  if (bin) {
+    bin.classList.add('pulse-wrong');
+    setTimeout(() => bin.classList.remove('pulse-wrong'), 500);
+  }
+
+  const screen = $('gameScreen').getBoundingClientRect();
+  const binRect = bin.getBoundingClientRect();
+  const absoluteBinX = binRect.left - screen.left + binRect.width / 2;
+  const absoluteBinY = binRect.top - screen.top + binRect.height / 2 - 30;
+
+  spawnParticlesFountain(absoluteBinX, absoluteBinY, '❌', 8);
+
+  $('gameScreen').style.animation = 'wrongShake3D 0.4s ease';
+  setTimeout(() => $('gameScreen').style.animation = '', 400);
+
+  if (gameState.feverActive) {
+    deactivateFeverMode();
+  }
+
+  setManitoFace('sad');
+  const manitoImg = $('manitoImg');
+  if (manitoImg) manitoImg.className = 'manito-img sad';
+  setTimeout(() => {
+    setManitoFace('normal');
+    if (manitoImg) manitoImg.className = 'manito-img';
+  }, 1500);
+
+  const phrase = MANITO_PHRASES_WRONG[Math.floor(Math.random() * MANITO_PHRASES_WRONG.length)];
+  showManitoSpeech(phrase);
+  speak("¡Oh no! " + phrase);
+
+  updateComboDisplay();
+  updateUI();
+
+  if (obj.element && obj.element.parentElement) obj.element.remove();
+
+  if (gameState.lives <= 0) {
+    setTimeout(() => endGame(), 600);
+    return;
+  }
+
+  showEduPopup(obj);
+}
+
+function handleObjectMissed(obj) {
+  if (obj.classified) return;
+  gameState.combo = 0;
+  gameState.wrongCount++;
+  gameState.lives--;
+
+  SoundEffects.play('miss');
+
+  if (gameState.feverActive) {
+    deactivateFeverMode();
+  }
+
+  setManitoFace('sad');
+  const manitoImg = $('manitoImg');
+  if (manitoImg) manitoImg.className = 'manito-img sad';
+  setTimeout(() => {
+    setManitoFace('normal');
+    if (manitoImg) manitoImg.className = 'manito-img';
+  }, 1500);
+
+  const phrase = "¡Cuidado con el vertedero! 🗑️";
+  showManitoSpeech(phrase);
+
+  updateComboDisplay();
+  updateUI();
+
+  if (gameState.lives <= 0) {
+    setTimeout(() => endGame(), 600);
+    return;
+  }
+
+  showEduPopup(obj);
+}
+
+function activateFeverMode() {
+  gameState.feverActive = true;
+  gameState.feverTimeLeft = 8000;
+  
+  SoundEffects.play('fever');
+
+  $('gameScreen').classList.add('fever-active');
+  $('feverTimerContainer').style.display = 'block';
+  $('feverBanner').classList.add('visible');
+
+  document.querySelectorAll('.game-object .obj-card').forEach(card => {
+    card.classList.add('fever-aura');
+  });
+
+  showManitoSpeech("🔥 ¡MODO FIEBRE! PUNTOS 2X ⭐");
+  speak("¡Modo fiebre! Puntos dobles.");
+
+  const manito = $('manitoImg').getBoundingClientRect();
+  const screen = $('gameScreen').getBoundingClientRect();
+  spawnParticlesFountain(manito.left - screen.left + 45, manito.top - screen.top + 45, '✨', 16);
+}
+
+function deactivateFeverMode() {
+  gameState.feverActive = false;
+  gameState.feverTimeLeft = 0;
+
+  $('gameScreen').classList.remove('fever-active');
+  $('feverTimerContainer').style.display = 'none';
+  $('feverBanner').classList.remove('visible');
+
+  document.querySelectorAll('.game-object .obj-card').forEach(card => {
+    card.classList.remove('fever-aura');
+  });
+
+  showManitoSpeech("🌱 Fiebre terminada. ¡Buen ritmo!");
+}
+
+function updateUI() {
+  $('scoreText').textContent = gameState.score;
+  $('levelText').textContent = gameState.level;
+
+  let hearts = '';
+  for (let i = 0; i < 5; i++) {
+    hearts += i < gameState.lives ? '❤️' : '🖤';
+  }
+  $('livesDisplay').innerHTML = hearts;
+
+  const streakProgress = Math.min(1, gameState.correctCount / gameState.objectsToNextLevel);
+  $('streakFill').style.width = (streakProgress * 100) + '%';
+}
+
+function updateComboDisplay() {
+  const comboEl = $('comboDisplay');
+  if (gameState.combo >= 3) {
+    comboEl.textContent = `🔥 x${gameState.combo}`;
+    comboEl.className = 'combo-display visible';
+  } else {
+    comboEl.className = 'combo-display';
+  }
+}
+
+function showFloatingScore(x, points, isFever) {
+  const container = $('gameScreen');
+  const floatEl = document.createElement('div');
+  floatEl.className = `score-float ${isFever ? 'fever-score' : ''}`;
+  floatEl.style.left = `${x - 20}px`;
+  floatEl.style.top = '62%';
+  floatEl.textContent = `+${points}`;
+  container.appendChild(floatEl);
+  setTimeout(() => floatEl.remove(), 1000);
+}
+
+function spawnParticlesFountain(x, y, emoji, count = 10) {
+  const container = $('gameScreen');
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = emoji;
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+
+    // Upward explosion mechanics
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 40 + Math.random() * 85;
+    const px = Math.cos(angle) * speed;
+    const py = -60 - Math.random() * 120; // Upward bias
+    const rot = Math.random() * 360 - 180;
+
+    p.style.setProperty('--px', `${px}px`);
+    p.style.setProperty('--py', `${py}px`);
+    p.style.setProperty('--rot', `${rot}deg`);
+
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+
+function showManitoSpeech(text) {
+  const speech = $('manitoSpeech');
+  if (speech) {
+    speech.textContent = text;
+    speech.className = 'manito-speech visible';
+    setTimeout(() => {
+      speech.className = 'manito-speech';
+    }, 2200);
+  }
+}
+
+function checkLevelUp() {
+  if (gameState.objectsSpawned >= gameState.objectsToNextLevel) {
+    gameState.level++;
+    gameState.objectsToNextLevel += 10 + gameState.level * 3;
+    gameState.currentSpeed = gameState.baseSpeed + (gameState.level - 1) * 0.25;
+    gameState.spawnInterval = Math.max(1600, 3500 - (gameState.level - 1) * 350);
+
+    SoundEffects.play('levelUp');
+
+    const banner = $('levelUpBanner');
+    if (banner) {
+      banner.className = 'level-up-banner show';
+      setTimeout(() => banner.className = 'level-up-banner', 1800);
+    }
+
+    const tread = document.querySelector('.conveyor-tread');
+    if (tread) {
+      const newDuration = Math.max(0.4, 1.2 - (gameState.level - 1) * 0.15);
+      tread.style.animationDuration = newDuration + 's';
+    }
+
+    showManitoSpeech(`¡Nivel ${gameState.level}! 🚀`);
+    speak(`¡Nivel ${gameState.level}!`);
+  }
+}
+
+function showEduPopup(obj) {
+  $('eduIcon').textContent = '💡';
+  $('eduTitle').textContent = '¡Dato Educativo!';
+  $('eduText').textContent = obj.tip;
+  $('eduPopup').classList.add('active');
+  gameState.isPaused = true;
+  
+  // Narrate the warning and educational tip!
+  speak("¡Cuidado! Se cayó " + obj.name + " al vertedero. Dato educativo: " + obj.tip);
+}
+
+function closeEduPopup() {
+  $('eduPopup').classList.remove('active');
+  gameState.isPaused = false;
+}
+
+function endGame() {
+  gameState.isRunning = false;
+  deactivateFeverMode();
+  if (gameState.animFrameId) cancelAnimationFrame(gameState.animFrameId);
+  if (gameState.spawnTimeoutId) clearTimeout(gameState.spawnTimeoutId);
+
+  // Detener música de fondo y tocar fanfarria final
+  SoundEffects.stopBgMusic();
+  const isWin = gameState.correctCount > gameState.wrongCount;
+  setTimeout(() => SoundEffects.playEndFanfare(isWin), 300);
+
+  $('endScore').textContent = gameState.score;
+  $('endCorrect').textContent = gameState.correctCount;
+  $('endWrong').textContent = gameState.wrongCount;
+  $('endLevel').textContent = gameState.level;
+  $('endCombo').textContent = gameState.maxCombo;
+
+  if (gameState.correctCount > gameState.wrongCount) {
+    setEndManito('celebrate');
+    $('endMessage').textContent = '🌟 ¡Excelente trabajo! Has demostrado ser un verdadero defensor del planeta. ¡Sigue practicando las 3 R y juntos la haremos en grande!';
+  } else if (gameState.correctCount === gameState.wrongCount) {
+    setEndManito('normal');
+    $('endMessage').textContent = '🌱 ¡Buen intento! Estás en el camino correcto. Recuerda: Reducir, Reutilizar y Reciclar son acciones diarias para salvar al planeta.';
+  } else {
+    setEndManito('sad');
+    $('endMessage').textContent = '💚 ¡No te desanimes! Cada error es una gran oportunidad de aprender sobre economía circular. ¡Vuelve a intentarlo!';
+  }
+
+  $('gameScreen').style.display = 'none';
+  $('endScreen').style.display = 'flex';
+
+  saveScore();
+  speak("Juego terminado. Puntuación final: " + gameState.score + " puntos. " + $('endMessage').textContent);
+}
+
+function setEndManito(expression) {
+  const endManito = $('endManito');
+  if (!endManito) return;
+  
+  if (expression === 'celebrate') {
+    endManito.src = 'bien.png';
+  } else if (expression === 'sad') {
+    endManito.src = 'mal.png';
+  } else {
+    endManito.src = 'mano.png';
+  }
+}
+
+function saveScore() {
+  const scores = JSON.parse(localStorage.getItem('ecoCircularScores') || '[]');
+  scores.push({
+    score: gameState.score,
+    level: gameState.level,
+    correct: gameState.correctCount,
+    wrong: gameState.wrongCount,
+    maxCombo: gameState.maxCombo,
+    date: new Date().toISOString()
+  });
+  if (scores.length > 50) scores.splice(0, scores.length - 50);
+  localStorage.setItem('ecoCircularScores', JSON.stringify(scores));
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!gameState.isRunning || gameState.isPaused) return;
+
+  switch(e.key) {
+    case '1': classifyObject('reducir'); break;
+    case '2': classifyObject('reutilizar'); break;
+    case '3': classifyObject('reciclar'); break;
+    case 'r': case 'R': classifyObject('reducir'); break;
+    case 'u': case 'U': classifyObject('reutilizar'); break;
+    case 'c': case 'C': classifyObject('reciclar'); break;
+  }
+});
+
+// Setup satisfying tap offsets
+document.querySelectorAll('.bin-3d').forEach(btn => {
+  btn.addEventListener('touchstart', function() {
+    this.style.transform = 'rotateX(20deg) scale(0.92)';
+  });
+  btn.addEventListener('touchend', function() {
+    this.style.transform = '';
+  });
+});
+
+initManito();
+</script>
+</body>
+</html>
+
